@@ -1,0 +1,867 @@
+<div class="page-container">
+  <!-- CABEÇALHO ATMOSFÉRICO -->
+  <header class="masthead">
+    <div class="masthead-brand">
+      <div class="brand-badge">[ LIMIAR // 1ª EDIÇÃO ]</div>
+      <h1 class="glitch-title">LIMIAR</h1>
+      <p class="subtitle">LIVRO DO JOGADOR &bull; FICHA DE PERITO</p>
+      <blockquote class="flavor-quote">
+        "As melhores invenções surgem do tédio, e é exatamente isso que eu vou fazer..."
+        <span>— Archemites Lyssa</span>
+      </blockquote>
+    </div>
+
+    <div class="masthead-controls">
+      <button class="btn-action export-btn" (click)="exportarFicha()">
+        <span class="btn-icon">💾</span> Exportar (.json)
+      </button>
+      <label class="btn-action import-btn">
+        <span class="btn-icon">📂</span> Importar (.json)
+        <input type="file" accept="application/json" (change)="importarFicha($event)" hidden>
+      </label>
+    </div>
+  </header>
+
+  <!-- HUD STATUS BAR / COCKPIT PERMANENTE -->
+  <section class="hud-cockpit">
+    <div class="hud-perito-info">
+      <div class="hud-avatar">👁️</div>
+      <div class="hud-details">
+        <div class="hud-nome">
+          {{ nome() || 'PERITO SEM NOME' }}
+          <span class="hud-nivel">NV. {{ nivel() }}</span>
+        </div>
+        <div class="hud-sub">
+          <span class="hud-profissao">{{ profissaoNome() }}</span>
+          <span class="hud-pontos" *ngIf="pontosRestantes() !== 0" [class.hud-warn]="pontosRestantes() !== 0">
+            [Pontos de Atributo: {{ pontosRestantes() }}]
+          </span>
+          <span class="hud-tracos" *ngIf="tracosRestantes() > 0">
+            [Traços Disp.: {{ tracosRestantes() }}]
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-gauges">
+      <!-- VIDA GAUGE -->
+      <div class="gauge-card gauge-vida" (click)="selecionarAba('combate')">
+        <div class="gauge-header">
+          <span class="gauge-title">VIDA</span>
+          <span class="gauge-values">{{ vidaAtual() }} / {{ vidaMaxima() }}</span>
+        </div>
+        <div class="gauge-bar-track">
+          <div class="gauge-bar-fill fill-vida" [style.width.%]="vidaPorcentagem()"></div>
+        </div>
+      </div>
+
+      <!-- FÔLEGO GAUGE -->
+      <div class="gauge-card gauge-folego" (click)="selecionarAba('combate')">
+        <div class="gauge-header">
+          <span class="gauge-title">FÔLEGO</span>
+          <span class="gauge-values">{{ folegoAtual() }} / {{ folegoMaximo() }}</span>
+        </div>
+        <div class="gauge-bar-track">
+          <div class="gauge-bar-fill fill-folego" [style.width.%]="folegoPorcentagem()"></div>
+        </div>
+      </div>
+
+      <!-- SANIDADE GAUGE -->
+      <div class="gauge-card gauge-sanidade" (click)="selecionarAba('combate')">
+        <div class="gauge-header">
+          <span class="gauge-title">SANIDADE</span>
+          <span class="gauge-values">{{ sanidadeAtual() }} / {{ sanidadeTotal() }}</span>
+        </div>
+        <div class="gauge-bar-track">
+          <div class="gauge-bar-fill fill-sanidade" [style.width.%]="sanidadePorcentagem()"></div>
+        </div>
+      </div>
+
+      <!-- CONHECIMENTO GAUGE -->
+      <div class="gauge-card gauge-conhecimento" (click)="selecionarAba('combate')">
+        <div class="gauge-header">
+          <span class="gauge-title">CONHECIMENTO</span>
+          <span class="gauge-values">{{ conhecimento() }}%</span>
+        </div>
+        <div class="gauge-bar-track">
+          <div class="gauge-bar-fill fill-conhecimento" [style.width.%]="conhecimentoPorcentagem()"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTADO DE ROLAGEM DE DADO (OVERLAY NOTIFICAÇÃO) -->
+  <div class="dice-result-banner" *ngIf="ultimoResultadoTeste() as r">
+    <div class="dice-result-inner" [class.critico]="r.critico" [class.falha]="r.falhaCritica">
+      <div class="dice-tag">TESTE DE {{ r.atributo }}</div>
+      <div class="dice-body">
+        <span class="dice-roll">d20: [<strong>{{ r.d20 }}</strong>]</span>
+        <span class="dice-math">{{ r.mod >= 0 ? '+' + r.mod : r.mod }}</span>
+        <span class="dice-equals">=</span>
+        <span class="dice-total">{{ r.total }}</span>
+        <span class="dice-badge crit" *ngIf="r.critico">★ ACERTO CRÍTICO (20)!</span>
+        <span class="dice-badge fail" *ngIf="r.falhaCritica">☠ FALHA CRÍTICA (1)!</span>
+      </div>
+      <button class="dice-close" (click)="limparResultadoTeste()">✕</button>
+    </div>
+  </div>
+
+  <!-- NAVEGAÇÃO EM ABAS -->
+  <nav class="nav-tabs" aria-label="Abas da Ficha">
+    <button *ngFor="let aba of abas"
+            class="tab-btn"
+            [class.active]="abaAtiva() === aba.id"
+            (click)="selecionarAba(aba.id)">
+      <span class="tab-icon">{{ aba.icone }}</span>
+      <span class="tab-label">{{ aba.label }}</span>
+    </button>
+  </nav>
+
+  <!-- CONTEÚDO DAS ABAS -->
+  <main class="tabs-viewport">
+
+    <!-- ==================== ABA 1: IDENTIDADE ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'identidade'">
+      <section class="sheet-card">
+        <div class="card-header">
+          <span class="section-badge">01</span>
+          <h2>IDENTIDADE &amp; REGISTRO DO PERITO</h2>
+        </div>
+
+        <div class="grid two">
+          <label class="field">
+            <span class="field-title">NOME DO PERITO</span>
+            <input type="text"
+                   [(ngModel)]="nome"
+                   (ngModelChange)="nome.set($event)"
+                   [value]="nome()"
+                   placeholder="Ex: Marcus Vane, Dra. Helena Holt...">
+          </label>
+
+          <label class="field">
+            <span class="field-title">PROFISSÃO</span>
+            <select [ngModel]="profissaoNome()" (ngModelChange)="profissaoNome.set($event)">
+              <option *ngFor="let p of profissoes" [value]="p.nome">{{ p.nome }}</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- DETALHES DA PROFISSÃO SELECIONADA -->
+        <div class="profession-banner" *ngIf="profissaoAtual().nome !== 'Nenhuma'">
+          <div class="profession-banner-header">
+            <span class="prof-tag">DADOS DA PROFISSÃO</span>
+            <span class="prof-name">{{ profissaoAtual().nome }}</span>
+          </div>
+
+          <div class="prof-grid">
+            <div class="prof-item">
+              <span class="prof-label">BÔNUS MECÂNICO</span>
+              <span class="prof-val bonus-highlight">{{ profissaoAtual().bonus }}</span>
+            </div>
+
+            <div class="prof-item">
+              <span class="prof-label">EQUIPAMENTO INICIAL</span>
+              <div class="prof-equip-row">
+                <span class="prof-val">{{ profissaoAtual().equipamento }}</span>
+                <button class="btn-micro"
+                        title="Adicionar automaticamente este equipamento ao inventário"
+                        (click)="adicionarEquipamentoProfissao()">
+                  + Guardar na Mochila
+                </button>
+              </div>
+            </div>
+
+            <div class="prof-item">
+              <span class="prof-label">DINHEIRO INICIAL ({{ profissaoAtual().dinheiro }})</span>
+              <div class="prof-money-row">
+                <button class="btn-dice" (click)="rolarDinheiro()">🎲 Rolar {{ profissaoAtual().dinheiro }}</button>
+                <span *ngIf="dinheiroRolado() !== null" class="money-result">$ {{ dinheiroRolado() }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <label class="field">
+            <span class="field-title">HISTÓRIA &amp; PRIMEIRO CONTATO COM O INDIZÍVEL</span>
+            <span class="field-hint">Plano de fundo, motivações para combater ou investigar o Limiar, marcas do passado.</span>
+            <textarea rows="5"
+                      [ngModel]="historia()"
+                      (ngModelChange)="historia.set($event)"
+                      placeholder="Relate aqui o histórico do Perito..."></textarea>
+          </label>
+
+          <label class="field">
+            <span class="field-title">APARÊNCIA, MANIAS &amp; PECULIARIDADES</span>
+            <span class="field-hint">Traços físicos, cicatrizes, vestimentas, tiques nervosos, hábitos e linguagem corporal.</span>
+            <textarea rows="5"
+                      [ngModel]="aparencia()"
+                      (ngModelChange)="aparencia.set($event)"
+                      placeholder="Descreva as peculiaridades visuais e comportamentais..."></textarea>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== ABA 2: ATRIBUTOS ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'atributos'">
+      <section class="sheet-card">
+        <div class="card-header">
+          <span class="section-badge">02</span>
+          <h2>ATRIBUTOS &amp; RECURSOS DERIVADOS</h2>
+        </div>
+
+        <div class="attr-creation-info">
+          <div class="attr-instructions">
+            Distribua <strong>5 pontos</strong> entre os atributos (mínimo -5, máximo 10 na criação).
+            Pontos podem ser reduzidos para realocar em outros.
+          </div>
+          <div class="points-badge" [class.points-alert]="pontosRestantes() !== 0">
+            <span class="points-label">PONTOS RESTANTES:</span>
+            <span class="points-number">{{ pontosRestantes() }}</span>
+          </div>
+        </div>
+
+        <!-- LISTA DOS 5 ATRIBUTOS OFICIAIS -->
+        <div class="attributes-grid">
+          <div class="attribute-card" *ngFor="let attr of atributoLabels" [ngClass]="attr.classe">
+            <div class="attr-card-top">
+              <div class="attr-title-group">
+                <span class="attr-badge-tag">{{ attr.chave.toUpperCase() }}</span>
+                <span class="attr-desc">{{ attr.desc }}</span>
+              </div>
+
+              <!-- ROLAGEM DE DADO RÁPIDA -->
+              <button class="btn-roll-attr"
+                      (click)="rolarTesteAtributo(attr.label,
+                        attr.chave === 'vigor' ? vigorTotal()
+                        : attr.chave === 'acuidade' ? acuidadeTotal()
+                        : attr.chave === 'psicometria' ? psicometriaTotal()
+                        : attr.chave === 'esoterismo' ? esoterismoTotal()
+                        : razaoTotal())"
+                      title="Rolar 1d20 + Atributo Total">
+                🎲 1d20
+              </button>
+            </div>
+
+            <div class="attr-card-controls">
+              <div class="stepper-group">
+                <button class="btn-step dec" (click)="ajustarAtributo(attr.chave, -1)">−</button>
+                <div class="attr-val-display">
+                  <span class="attr-base-val">{{ atributos()[attr.chave] }}</span>
+                  <span class="attr-base-sub">BASE</span>
+                </div>
+                <button class="btn-step inc" (click)="ajustarAtributo(attr.chave, 1)">+</button>
+              </div>
+
+              <div class="attr-calculation">
+                <div class="attr-calc-item" *ngIf="bonusProfissao()[attr.chave]">
+                  <span class="calc-label">PROFISSÃO:</span>
+                  <span class="calc-val">{{ (bonusProfissao()[attr.chave] ?? 0) >= 0 ? '+' + bonusProfissao()[attr.chave] : bonusProfissao()[attr.chave] }}</span>
+                </div>
+                <div class="attr-total-badge">
+                  <span class="total-label">TOTAL:</span>
+                  <span class="total-number">
+                    {{ attr.chave === 'vigor' ? vigorTotal()
+                      : attr.chave === 'acuidade' ? acuidadeTotal()
+                      : attr.chave === 'psicometria' ? psicometriaTotal()
+                      : attr.chave === 'esoterismo' ? esoterismoTotal()
+                      : razaoTotal() }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PSICOMETRIA: SUB-ATRIBUTOS INTELIGÊNCIA & SAPIÊNCIA -->
+        <div class="subattr-card">
+          <div class="subattr-header">
+            <span class="subattr-tag">PSICOMETRIA COGNITIVA</span>
+            <h3>SUB-ATRIBUTO DOMINANTE</h3>
+            <p class="subattr-rule">
+              Escolha apenas <strong>um sub-atributo</strong> para receber o valor completo (+{{ psicometriaTotal() }}).
+              O outro recebe a penalidade de <strong>reforço -3</strong>.
+            </p>
+          </div>
+
+          <div class="subattr-selector">
+            <label class="subattr-radio-card" [class.selected]="subAtributoDominante() === 'inteligencia'">
+              <input type="radio" name="sub" value="inteligencia"
+                     [ngModel]="subAtributoDominante()" (ngModelChange)="subAtributoDominante.set($event)">
+              <div class="radio-content">
+                <div class="radio-title">INTELIGÊNCIA</div>
+                <p class="radio-desc">Tecnologia, computadores, redes, leitura, identificação de padrões e decifrar criptografias.</p>
+                <div class="subattr-score">Total: <strong>{{ inteligencia() >= 0 ? '+' + inteligencia() : inteligencia() }}</strong></div>
+              </div>
+            </label>
+
+            <label class="subattr-radio-card" [class.selected]="subAtributoDominante() === 'sapiencia'">
+              <input type="radio" name="sub" value="sapiencia"
+                     [ngModel]="subAtributoDominante()" (ngModelChange)="subAtributoDominante.set($event)">
+              <div class="radio-content">
+                <div class="radio-title">SAPIÊNCIA</div>
+                <p class="radio-desc">Jogo de cintura, diplomacia, persuadir, lidar com pessoas, dedução e detectar mentiras.</p>
+                <div class="subattr-score">Total: <strong>{{ sapiencia() >= 0 ? '+' + sapiencia() : sapiencia() }}</strong></div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- RECURSOS DERIVADOS BASE -->
+        <div class="derived-section">
+          <div class="derived-title">RECURSOS DERIVADOS (CÁLCULOS DA FICHA)</div>
+          <div class="grid three">
+            <div class="derived-box derived-vida">
+              <span class="d-label">VIDA MÁXIMA</span>
+              <span class="d-formula">VIGOR + 10</span>
+              <span class="d-value">{{ vidaMaxima() }}</span>
+            </div>
+
+            <div class="derived-box derived-folego">
+              <span class="d-label">FÔLEGO MÁXIMO</span>
+              <span class="d-formula">= VIGOR</span>
+              <span class="d-value">{{ folegoMaximo() }}</span>
+            </div>
+
+            <div class="derived-box derived-sanidade">
+              <span class="d-label">SANIDADE TOTAL</span>
+              <span class="d-formula">RAZÃO + 1d6 (MÍN. 2)</span>
+              <span class="d-value">{{ sanidadeTotal() }}</span>
+              <button class="btn-micro roll-sanity" (click)="rolarSanidade()">🎲 Rolar 1d6</button>
+              <span class="roll-note" *ngIf="ultimaRolagemSanidade() !== null">Dado: {{ ultimaRolagemSanidade() }}</span>
+            </div>
+          </div>
+
+          <div class="sync-action">
+            <button class="btn-sync" (click)="sincronizarComMaximos()">
+              ↻ Sincronizar Vida, Fôlego e Sanidade nos valores máximos
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== ABA 3: STATUS & COMBATE ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'combate'">
+      <section class="sheet-card">
+        <div class="card-header">
+          <span class="section-badge">03</span>
+          <h2>STATUS DE JOGO &amp; COMBATE</h2>
+        </div>
+
+        <!-- MEDIDORES INTERATIVOS DE RECURSOS EM COMBATE -->
+        <div class="vitals-dashboard">
+          <!-- VIDA -->
+          <div class="vital-card vital-vida">
+            <div class="vital-top">
+              <span class="vital-name">VIDA</span>
+              <span class="vital-bounds">Máx: {{ vidaMaxima() }}</span>
+            </div>
+            <div class="vital-control-row">
+              <button class="vital-step" (click)="ajustarRecurso('vida', -1)">−</button>
+              <span class="vital-current-num" [class.danger]="vidaAtual() <= 0">{{ vidaAtual() }}</span>
+              <button class="vital-step" (click)="ajustarRecurso('vida', 1)">+</button>
+            </div>
+            <div class="vital-bar">
+              <div class="vital-fill fill-vida" [style.width.%]="vidaPorcentagem()"></div>
+            </div>
+            <p class="vital-warning" *ngIf="vidaAtual() <= 0 && vidaAtual() >= -5">
+              ⚠️ Em agonia! Perdendo 1 PV por turno (Teste de VIGOR para evitar).
+            </p>
+            <p class="vital-warning deadly" *ngIf="vidaAtual() < -5">
+              ☠ MORTE PERMANENTE (Passou de -5 de Vida)!
+            </p>
+          </div>
+
+          <!-- FÔLEGO -->
+          <div class="vital-card vital-folego">
+            <div class="vital-top">
+              <span class="vital-name">FÔLEGO</span>
+              <span class="vital-bounds">Máx: {{ folegoMaximo() }}</span>
+            </div>
+            <div class="vital-control-row">
+              <button class="vital-step" (click)="ajustarRecurso('folego', -1)">−</button>
+              <span class="vital-current-num" [class.exhausted]="folegoAtual() <= 0">{{ folegoAtual() }}</span>
+              <button class="vital-step" (click)="ajustarRecurso('folego', 1)">+</button>
+            </div>
+            <div class="vital-bar">
+              <div class="vital-fill fill-folego" [style.width.%]="folegoPorcentagem()"></div>
+            </div>
+            <p class="vital-warning" *ngIf="folegoAtual() <= 0">
+              ⚠️ Fôlego zerado: Perito em Exaustão (-[VIGOR] em todos os testes).
+            </p>
+            <p class="vital-info" *ngIf="folegoAtual() > 0">
+              Recupera 1 ponto a cada 15 min. Correr: 5m/ponto. Pular/Escalar: 2 pontos.
+            </p>
+          </div>
+
+          <!-- SANIDADE -->
+          <div class="vital-card vital-sanidade">
+            <div class="vital-top">
+              <span class="vital-name">SANIDADE</span>
+              <span class="vital-bounds">Total: {{ sanidadeTotal() }}</span>
+            </div>
+            <div class="vital-control-row">
+              <button class="vital-step" (click)="ajustarRecurso('sanidade', -1)">−</button>
+              <span class="vital-current-num" [class.insane]="sanidadeAtual() <= 0">{{ sanidadeAtual() }}</span>
+              <button class="vital-step" (click)="ajustarRecurso('sanidade', 1)">+</button>
+            </div>
+            <div class="vital-bar">
+              <div class="vital-fill fill-sanidade" [style.width.%]="sanidadePorcentagem()"></div>
+            </div>
+            <p class="vital-warning" *ngIf="sanidadeAtual() === 0">
+              ⚡ Sanidade em 0: Teste de RAZÃO na Corda da Loucura (Falha = 2x dano e Insano).
+            </p>
+            <p class="vital-warning insane" *ngIf="sanidadeAtual() < 0">
+              🌀 Sanidade Negativa! Risco de distúrbios graves e colapso psíquico.
+            </p>
+          </div>
+        </div>
+
+        <div class="sync-action">
+          <button class="btn-sync" (click)="sincronizarComMaximos()">
+            ↻ Restaurar Vida, Fôlego e Sanidade aos valores máximos
+          </button>
+        </div>
+
+        <!-- CONHECIMENTO & NÍVEL DO PERITO -->
+        <div class="knowledge-section">
+          <div class="grid two">
+            <div class="knowledge-box">
+              <div class="k-header">
+                <span class="k-title">CONHECIMENTO DO INDIZÍVEL (%)</span>
+                <span class="k-val">{{ conhecimento() }}%</span>
+              </div>
+              <input type="number" min="0" max="100"
+                     [ngModel]="conhecimento()"
+                     (ngModelChange)="conhecimento.set($event)">
+              <div class="k-bar-track">
+                <div class="k-bar-fill" [style.width.%]="conhecimentoPorcentagem()"></div>
+              </div>
+              <p class="k-rule">
+                1 de dano de sanidade = +1% de Conhecimento. A <strong>100%</strong>, a barra zera e você recebe
+                <strong>+1 Traço de Revelação</strong> e <strong>+1 ponto de atributo</strong>!
+              </p>
+            </div>
+
+            <div class="level-box">
+              <div class="k-header">
+                <span class="k-title">NÍVEL DO PERITO</span>
+                <span class="k-val">NV. {{ nivel() }}</span>
+              </div>
+              <input type="number" min="1"
+                     [ngModel]="nivel()"
+                     (ngModelChange)="nivel.set($event)">
+              <p class="level-rule">
+                Ao subir de nível: ganha pontos para atributos, desbloqueia nós de conhecimento superiores
+                e ganha <strong>+1d4 de Vida</strong> e <strong>+1d4 de Sanidade</strong> (50% de chance de curar sanidade toda).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATUS ATIVOS DO PERITO -->
+        <div class="status-section">
+          <div class="status-section-header">
+            <h3>CONDIÇÕES &amp; STATUS DO PERITO</h3>
+            <span class="status-hint">Clique para ativar / desativar condições</span>
+          </div>
+
+          <div class="status-chips-grid">
+            <button *ngFor="let s of statusList"
+                    class="status-chip-card"
+                    [class.active]="statusAtivos().has(s.nome)"
+                    (click)="toggleStatus(s.nome)">
+              <div class="status-chip-top">
+                <span class="status-chip-name">{{ s.nome }}</span>
+                <span class="status-chip-state">{{ statusAtivos().has(s.nome) ? 'ATIVO' : 'INATIVO' }}</span>
+              </div>
+              <p class="status-chip-desc">{{ s.desc }}</p>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== ABA 4: INVENTÁRIO ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'inventario'">
+      <section class="sheet-card">
+        <div class="card-header">
+          <span class="section-badge">04</span>
+          <h2>INVENTÁRIO &amp; EQUIPAMENTO</h2>
+        </div>
+
+        <div class="inventory-topbar">
+          <div class="inventory-quick-gear" *ngIf="profissaoAtual().nome !== 'Nenhuma'">
+            <span class="gear-prof-label">Equipamento Padrão ({{ profissaoAtual().nome }}):</span>
+            <span class="gear-prof-text">{{ profissaoAtual().equipamento }}</span>
+            <button class="btn-micro" (click)="adicionarEquipamentoProfissao()">
+              + Importar da Profissão
+            </button>
+          </div>
+
+          <div class="inventory-money-tag" *ngIf="dinheiroRolado() !== null">
+            <span>Dinheiro em mãos:</span>
+            <strong>$ {{ dinheiroRolado() }}</strong>
+          </div>
+        </div>
+
+        <div class="add-item-bar">
+          <input type="text"
+                 [(ngModel)]="novoItem"
+                 placeholder="Digite um item, arma, munição ou ferramenta..."
+                 (keyup.enter)="adicionarItem()">
+          <button class="btn-primary" (click)="adicionarItem()">+ Adicionar Item</button>
+        </div>
+
+        <div class="inventory-list-container">
+          <div class="empty-list" *ngIf="inventario().length === 0">
+            Mochila vazia. Adicione itens acima ou use o equipamento inicial da sua profissão.
+          </div>
+
+          <ul class="styled-item-list" *ngIf="inventario().length > 0">
+            <li class="item-entry" *ngFor="let item of inventario(); let i = index">
+              <div class="item-main">
+                <span class="item-index">{{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }}.</span>
+                <span class="item-title">{{ item }}</span>
+              </div>
+              <button class="btn-remove" (click)="removerItem(i)" title="Remover item">✕</button>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== ABA 5: RITUAIS & MAGIAS ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'magias'">
+      <section class="sheet-card">
+        <div class="card-header">
+          <span class="section-badge">05</span>
+          <h2>GRIMÓRIO &bull; RITUAIS &amp; MAGIAS DO LIMIAR</h2>
+        </div>
+
+        <div class="magic-rules-card">
+          <div class="magic-rules-header">ESTRUTURA CANÔNICA DE UMA MAGIA (LIVRO PÁG. 49)</div>
+          <p>Toda magia exige no mínimo 3 palavras de conjuração de forças do Limiar:</p>
+          <div class="magic-formula-tags">
+            <span class="magic-tag verbal">1x Palavra Verbal</span>
+            <span class="magic-sep">+</span>
+            <span class="magic-tag poder">1x Palavra de Poder</span>
+            <span class="magic-sep">+</span>
+            <span class="magic-tag impulso">1x Palavra de Impulso</span>
+          </div>
+          <p class="magic-rules-footer">
+            Custo em Sanidade = valor da palavra mais cara (Classe 1 a 5). Pontos perdidos são recuperados ao fim do combate se permanecer acima de 0.
+          </p>
+        </div>
+
+        <div class="add-item-bar">
+          <input type="text"
+                 [(ngModel)]="novoRitual"
+                 placeholder="Ex: Spawn Blood Barrier (Gof'nnn gn'th'bthnk mg'nglui) — Custo 3 Sanidade..."
+                 (keyup.enter)="adicionarRitual()">
+          <button class="btn-primary" (click)="adicionarRitual()">+ Registrar Magia/Ritual</button>
+        </div>
+
+        <div class="inventory-list-container">
+          <div class="empty-list" *ngIf="rituaisMagias().length === 0">
+            Nenhum ritual ou magia anotada no momento. Magias e rituais são concedidos por Revelações e Iluminações.
+          </div>
+
+          <ul class="styled-item-list" *ngIf="rituaisMagias().length > 0">
+            <li class="item-entry magic-entry" *ngFor="let r of rituaisMagias(); let i = index">
+              <div class="item-main">
+                <span class="item-index-magic">🔮 {{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }}.</span>
+                <span class="item-title">{{ r }}</span>
+              </div>
+              <button class="btn-remove" (click)="removerRitual(i)" title="Remover ritual">✕</button>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== ABA 6: OS 5 CAMINHOS DO INDIZÍVEL ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'caminhos'">
+      <section class="sheet-card">
+        <div class="card-header">
+          <span class="section-badge">06</span>
+          <h2>OS 5 CAMINHOS DO INDIZÍVEL &bull; ÁRVORE DE NÓS</h2>
+        </div>
+
+        <div class="paths-quote">
+          "Todo conhecimento tem um preço. Alguns pagam com sanidade, outros pagam com aquilo que costumavam ser."
+        </div>
+
+        <!-- RECURSOS DE REVELAÇÃO -->
+        <div class="revelation-control-bar">
+          <label class="revelation-input-label">
+            <span class="rev-title">TRAÇOS DE REVELAÇÃO TOTAIS:</span>
+            <input type="number" min="0"
+                   [ngModel]="tracosRevelacao()"
+                   (ngModelChange)="tracosRevelacao.set($event)">
+          </label>
+
+          <div class="rev-stats">
+            <div class="stat-pill">Gastos: <strong>{{ tracosGastos() }}</strong></div>
+            <div class="stat-pill highlight" [class.warn]="tracosRestantes() < 0">
+              Disponíveis para gastar: <strong>{{ tracosRestantes() }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- SELETOR DE CAMINHOS (CORES DOS ATRIBUTOS) -->
+        <div class="caminhos-nav-selector">
+          <button *ngFor="let c of caminhos"
+                  class="caminho-nav-btn"
+                  [ngClass]="'btn-caminho-' + c.atributo"
+                  [class.active]="caminhoAtivo() === c.nome"
+                  (click)="selecionarCaminho(c.nome)">
+            <span class="c-attr-tag">{{ c.atributo.toUpperCase() }}</span>
+            <span class="c-nav-name">{{ c.nome }}</span>
+            <span class="c-nav-score">{{ totalNosCompradosCaminho(c.nome) }}/32</span>
+          </button>
+        </div>
+
+        <!-- CONTEÚDO DO CAMINHO ATIVO COM SUB-ABAS DE TRILHAS -->
+        <div class="active-caminho-panel" [ngClass]="'panel-' + caminhoAtual().atributo">
+          <!-- CABEÇALHO DO CAMINHO -->
+          <div class="active-caminho-header">
+            <div class="c-header-left">
+              <span class="c-badge-attr">CAMINHO &bull; {{ caminhoAtual().atributo.toUpperCase() }}</span>
+              <h3 class="c-title">{{ caminhoAtual().nome }}</h3>
+            </div>
+            <div class="c-header-stat">
+              Total desbloqueado: <strong>{{ totalNosCompradosCaminho(caminhoAtual().nome) }} / 32 Nós</strong>
+            </div>
+          </div>
+
+          <!-- SUB-ABAS DAS TRILHAS (COM LEVE VARIAÇÃO DE COR) -->
+          <div class="trilhas-subtabs-nav">
+            <button *ngFor="let t of caminhoAtual().trilhas; let tIdx = index"
+                    class="trilha-subtab-btn"
+                    [class.active]="trilhaAtivaIndex() === tIdx"
+                    [style.--t-cor]="infoTrilha(caminhoAtual().nome, tIdx).cor"
+                    [style.--t-glow]="infoTrilha(caminhoAtual().nome, tIdx).glow"
+                    [style.--t-bg]="infoTrilha(caminhoAtual().nome, tIdx).bg"
+                    (click)="selecionarTrilha(tIdx)">
+              <span class="t-subtab-dot"></span>
+              <span class="t-subtab-nome">{{ t.nome }}</span>
+              <span class="t-subtab-badge">
+                {{ nosComprados(caminhoAtual().nome, t.nome) }}/{{ t.nos.length }}
+              </span>
+            </button>
+          </div>
+
+          <!-- CONTEÚDO DA TRILHA ATIVA (SUB-ABA SELECIONADA) -->
+          <div class="trilha-viewport"
+               [style.--t-active-cor]="infoTrilha(caminhoAtual().nome, trilhaAtivaIndex()).cor"
+               [style.--t-active-glow]="infoTrilha(caminhoAtual().nome, trilhaAtivaIndex()).glow"
+               [style.--t-active-bg]="infoTrilha(caminhoAtual().nome, trilhaAtivaIndex()).bg">
+
+            <div class="trilha-view-header">
+              <div class="t-view-title-group">
+                <span class="t-view-idx">TRILHA 0{{ trilhaAtivaIndex() + 1 }} // 04</span>
+                <h4 class="t-view-title">{{ trilhaAtual().nome }}</h4>
+              </div>
+              <div class="t-view-progress-wrap">
+                <span class="t-view-progress-label">
+                  Progresso: {{ nosComprados(caminhoAtual().nome, trilhaAtual().nome) }} de 8 Nós
+                </span>
+                <div class="t-progress-bar">
+                  <div class="t-progress-fill"
+                       [style.width.%]="(nosComprados(caminhoAtual().nome, trilhaAtual().nome) / 8) * 100"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- OS 8 NÓS DA TRILHA ATIVA -->
+            <div class="trilha-nodes-list">
+              <div class="node-item" *ngFor="let no of trilhaAtual().nos; let i = index"
+                   [class.comprado]="i < nosComprados(caminhoAtual().nome, trilhaAtual().nome)"
+                   [class.proximo]="i === nosComprados(caminhoAtual().nome, trilhaAtual().nome)"
+                   [class.bloqueado]="motivoBloqueio(caminhoAtual(), trilhaAtual(), i) !== null && i >= nosComprados(caminhoAtual().nome, trilhaAtual().nome)">
+
+                <div class="node-meta">
+                  <div class="node-left">
+                    <span class="node-step-index">NÓ 0{{ i + 1 }}</span>
+                    <span class="node-title">{{ no.nome }}</span>
+                  </div>
+                  <span class="node-level-tag">Nv. Mínimo {{ no.nivel }}</span>
+                </div>
+
+                <p class="node-description">{{ no.efeito }}</p>
+
+                <div class="node-action-bar">
+                  <!-- BOTAO COMPRAR -->
+                  <div *ngIf="i === nosComprados(caminhoAtual().nome, trilhaAtual().nome)" class="purchase-action">
+                    <button class="btn-buy-node"
+                            [disabled]="motivoBloqueio(caminhoAtual(), trilhaAtual(), i) !== null"
+                            (click)="comprarNo(caminhoAtual(), trilhaAtual())">
+                      ▸ Desbloquear Nó (1 Traço)
+                    </button>
+                    <span class="block-reason" *ngIf="motivoBloqueio(caminhoAtual(), trilhaAtual(), i) as motivo">
+                      🔒 {{ motivo }}
+                    </span>
+                  </div>
+
+                  <!-- BOTAO DESFAZER -->
+                  <div *ngIf="i < nosComprados(caminhoAtual().nome, trilhaAtual().nome) && i === nosComprados(caminhoAtual().nome, trilhaAtual().nome) - 1" class="undo-action">
+                    <span class="node-bought-tag">✓ Adquirido</span>
+                    <button class="btn-undo-node" (click)="desfazerNo(caminhoAtual(), trilhaAtual())">
+                      ✕ Desfazer compra
+                    </button>
+                  </div>
+
+                  <!-- NÓ JÁ COMPRADO ANTERIOR -->
+                  <div *ngIf="i < nosComprados(caminhoAtual().nome, trilhaAtual().nome) - 1">
+                    <span class="node-bought-tag">✓ Adquirido</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== ABA 7: GUIA DO LIVRO (TABELAS DE CONSULTA) ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'regras'">
+      <section class="sheet-card">
+        <div class="card-header">
+          <span class="section-badge">07</span>
+          <h2>GUIA DO PERITO &bull; TABELAS &amp; REGRAS DE LIMIAR</h2>
+        </div>
+
+        <div class="tables-grid">
+          <!-- DIFICULDADES -->
+          <div class="rule-table-card">
+            <h3 class="table-card-title">TABELA DE DIFICULDADES DE TESTE (d20)</h3>
+            <p class="table-card-desc">Para acerto em combate, tarefas minuciosas e ações sob pressão.</p>
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Dificuldade</th>
+                  <th>Mínimo no d20 + Mod</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let d of dificuldades">
+                  <td class="td-code">DF {{ d.df }}</td>
+                  <td class="td-target">{{ d.min }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- SANIDADE NEGATIVA -->
+          <div class="rule-table-card">
+            <h3 class="table-card-title">FAIXAS DE SANIDADE NEGATIVA &amp; DISTÚRBIOS</h3>
+            <p class="table-card-desc">Efeitos permanentes ou graves conforme o contato com o Indizível avança.</p>
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Faixa</th>
+                  <th>Efeito / Distúrbio</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of tabelaSanidadeNegativa">
+                  <td class="td-sanity-band">{{ s.faixa }}</td>
+                  <td>{{ s.efeito }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ARMAS CORPO A CORPO -->
+          <div class="rule-table-card">
+            <h3 class="table-card-title">ARMAS DE CORPO-A-CORPO</h3>
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Arma</th>
+                  <th>Dano / Efeito</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of armasCorpoACorpo">
+                  <td class="td-strong">{{ a.nome }}</td>
+                  <td class="td-dice">{{ a.dano }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ARMAS A DISTÂNCIA -->
+          <div class="rule-table-card">
+            <h3 class="table-card-title">ARMAS A DISTÂNCIA</h3>
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Arma</th>
+                  <th>Dano</th>
+                  <th>Cadência de Tiro</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let w of armasDistancia">
+                  <td class="td-strong">{{ w.nome }}</td>
+                  <td class="td-dice">{{ w.dano }}</td>
+                  <td class="td-cadence">{{ w.tiros }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ITENS MEDICINAIS -->
+          <div class="rule-table-card">
+            <h3 class="table-card-title">ITENS MEDICINAIS</h3>
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Efeito Medicinal</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let m of itensMedicinais">
+                  <td class="td-strong">{{ m.nome }}</td>
+                  <td>{{ m.efeito }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ITENS PSICOATIVOS -->
+          <div class="rule-table-card">
+            <h3 class="table-card-title">ITENS PSICOATIVOS</h3>
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Substância</th>
+                  <th>Efeito Mental &amp; Riscos</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of itensPsicoativos">
+                  <td class="td-strong">{{ p.nome }}</td>
+                  <td>{{ p.efeito }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- RODAPÉ DA FICHA -->
+  <footer class="app-footer">
+    <div class="footer-divider"></div>
+    <p>LIMIAR 1ª Edição &bull; Desenvolvido para o horror cósmico dos anos 80.</p>
+    <p class="footer-sub">Mantenha seu arquivo salvo exportando sua ficha em JSON regularmente.</p>
+  </footer>
+</div>

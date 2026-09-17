@@ -1,0 +1,179 @@
+:root {
+  /* Paleta baseada no livro Limiar (1ª Edição) - Horror Cósmico dos Anos 80 */
+  --bg-void: #060608;
+  --bg-dark: #0b0c12;
+  --bg-card: #11131c;
+  --bg-card-hover: #161824;
+  --bg-card-active: #1c1f2e;
+  --bg-input: #07080d;
+
+  /* Bordas e separadores */
+  --border-dim: #232636;
+  --border-mid: #333850;
+  --border-bright: #4f567a;
+  --border-glow: rgba(255, 255, 255, 0.15);
+
+  /* Tipografia */
+  --text-main: #f3f5fa;
+  --text-muted: #959cb3;
+  --text-dim: #60677d;
+  --text-inverse: #060608;
+
+  /* Cores oficiais dos 5 Atributos de LIMIAR */
+  --color-vigor: #ff3848;
+  --color-vigor-glow: rgba(255, 56, 72, 0.4);
+  --color-vigor-bg: rgba(255, 56, 72, 0.12);
+
+  --color-acuidade: #00e5a3;
+  --color-acuidade-glow: rgba(0, 229, 163, 0.4);
+  --color-acuidade-bg: rgba(0, 229, 163, 0.12);
+
+  --color-psicometria: #38bdf8;
+  --color-psicometria-glow: rgba(56, 189, 248, 0.4);
+  --color-psicometria-bg: rgba(56, 189, 248, 0.12);
+
+  --color-esoterismo: #e040fb;
+  --color-esoterismo-glow: rgba(224, 64, 251, 0.4);
+  --color-esoterismo-bg: rgba(224, 64, 251, 0.12);
+
+  --color-razao: #fbbf24;
+  --color-razao-glow: rgba(251, 191, 36, 0.4);
+  --color-razao-bg: rgba(251, 191, 36, 0.12);
+
+  /* Status especiais */
+  --color-danger: #ef4444;
+  --color-danger-glow: rgba(239, 68, 68, 0.45);
+  --color-conhecimento: #a855f7;
+  --color-conhecimento-glow: rgba(168, 85, 247, 0.45);
+
+  /* Fontes solicitadas: Títulos em Sixtyfour (padrão) e textos em Silkscreen */
+  --font-pixel: 'Silkscreen', monospace;
+  --font-title: 'Sixtyfour', sans-serif;
+  --font-mono: 'Silkscreen', monospace;
+  --font-ui: 'Silkscreen', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--bg-void);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Efeito sutil de scanlines atmosféricas (estilo fita VHS / monitor dos anos 80) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0.18) 1px,
+    rgba(0, 0, 0, 0) 2px
+  );
+  opacity: 0.7;
+}
+
+/* Vinheta de canto e atmosfera cósmica escura */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(20, 15, 30, 0) 45%,
+    rgba(3, 3, 6, 0.7) 85%,
+    rgba(0, 0, 0, 0.95) 100%
+  );
+}
+
+/* Scrollbar estilizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-void);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-mid);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-bright);
+}
+
+/* Elementos globais de formulário e botões */
+button {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-card);
+  color: var(--text-main);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--text-main);
+  background: var(--bg-card-hover);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: var(--border-dim);
+  color: var(--text-dim);
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 9px 12px;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-input);
+  color: var(--text-main);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #f3f5fa;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-dim);
+}
