@@ -9,13 +9,18 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "^22.0.0",
-    "@angular/common": "^22.0.0",
+    "@angular/common": "^22.1.7",
     "@angular/compiler": "^22.0.0",
     "@angular/core": "^22.0.0",
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/platform-browser-dynamic": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.0",
+    "express": "^5.2.1",
+    "html2pdf.js": "^0.14.0",
+    "mongodb": "^7.6.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -25,5 +30,11 @@
     "@angular/cli": "^22.0.0",
     "@angular/compiler-cli": "^22.0.0",
     "typescript": "~6.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "lmdb@3.5.6": true,
+    "@parcel/watcher@2.6.0": true,
+    "msgpackr-extract@3.0.4": true
   }
 }

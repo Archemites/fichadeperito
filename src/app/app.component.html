@@ -1,38 +1,53 @@
 <div class="page-container">
   <!-- CABEÇALHO ATMOSFÉRICO -->
   <header class="masthead">
-    <div class="masthead-brand">
+    <div class="masthead-brand" (click)="abrirTelaLogin()" style="cursor: pointer;" title="Voltar para Login / Seleção de Usuário">
       <div class="brand-badge">[ LIMIAR // 1ª EDIÇÃO ]</div>
       <h1 class="glitch-title">LIMIAR</h1>
       <p class="subtitle">LIVRO DO JOGADOR &bull; FICHA DE PERITO</p>
-      <blockquote class="flavor-quote">
-        "As melhores invenções surgem do tédio, e é exatamente isso que eu vou fazer..."
-        <span>— Archemites Lyssa</span>
-      </blockquote>
     </div>
 
     <div class="masthead-controls">
-      <button class="btn-action export-btn" (click)="exportarFicha()">
-        <span class="btn-icon">💾</span> Exportar (.json)
+      <!-- BOTAO SELECIONAR / MEUS PERITOS -->
+      <button class="btn-action peritos-list-btn" *ngIf="usuarioAtual()" (click)="abrirTelaSelecaoPeritos()" title="Ver meus peritos">
+        <span class="btn-icon">📜</span> Meus Peritos
       </button>
-      <label class="btn-action import-btn">
-        <span class="btn-icon">📂</span> Importar (.json)
-        <input type="file" accept="application/json" (change)="importarFicha($event)" hidden>
-      </label>
+
+      <!-- BOTAO SALVAR -->
+      <button class="btn-action save-db-btn" (click)="salvarFichaNoBanco()" [disabled]="salvandoNoBanco()" title="Salvar ficha">
+        <span class="btn-icon">💾</span> {{ salvandoNoBanco() ? 'Salvar...' : 'Salvar' }}
+      </button>
+
+      <!-- BADGE SELECAO DE USUARIO / LOGIN -->
+      <button class="btn-action user-db-btn" (click)="abrirTelaLogin()" title="Alternar usuário">
+        <span class="btn-icon">👤</span> {{ usuarioAtual() ? (isMestre() ? '👑 ' + usuarioAtual() : usuarioAtual()) : 'Login' }}
+      </button>
+
+      <button class="btn-action export-btn" (click)="exportarFicha()" title="Exportar Ficha em formato PDF">
+        <span class="btn-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Exportar (.pdf)
+      </button>
     </div>
   </header>
+
+  <!-- BANNER NOTIFICAÇÃO DO BANCO -->
+  <div class="db-toast-banner" *ngIf="mensagemStatusBanco()">
+    {{ mensagemStatusBanco() }}
+  </div>
 
   <!-- HUD STATUS BAR / COCKPIT PERMANENTE -->
   <section class="hud-cockpit">
     <div class="hud-perito-info">
-      <div class="hud-avatar">👁️</div>
+      <div class="hud-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
       <div class="hud-details">
         <div class="hud-nome">
           {{ nome() || 'PERITO SEM NOME' }}
           <span class="hud-nivel">NV. {{ nivel() }}</span>
         </div>
         <div class="hud-sub">
-          <span class="hud-profissao">{{ profissaoNome() }}</span>
+          <span class="hud-profissao" [style.color]="profissaoAtual().cor">
+            <span class="prof-icon" [innerHTML]="getSafeHtml(profissaoAtual().icone)"></span>
+            {{ profissaoAtual().nome }}
+          </span>
           <span class="hud-pontos" *ngIf="pontosRestantes() !== 0" [class.hud-warn]="pontosRestantes() !== 0">
             [Pontos de Atributo: {{ pontosRestantes() }}]
           </span>
@@ -99,8 +114,8 @@
         <span class="dice-math">{{ r.mod >= 0 ? '+' + r.mod : r.mod }}</span>
         <span class="dice-equals">=</span>
         <span class="dice-total">{{ r.total }}</span>
-        <span class="dice-badge crit" *ngIf="r.critico">★ ACERTO CRÍTICO (20)!</span>
-        <span class="dice-badge fail" *ngIf="r.falhaCritica">☠ FALHA CRÍTICA (1)!</span>
+        <span class="dice-badge crit" *ngIf="r.critico"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ACERTO CRÍTICO (20)!</span>
+        <span class="dice-badge fail" *ngIf="r.falhaCritica"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg> FALHA CRÍTICA (1)!</span>
       </div>
       <button class="dice-close" (click)="limparResultadoTeste()">✕</button>
     </div>
@@ -110,9 +125,10 @@
   <nav class="nav-tabs" aria-label="Abas da Ficha">
     <button *ngFor="let aba of abas"
             class="tab-btn"
+            [attr.data-tab]="aba.id"
             [class.active]="abaAtiva() === aba.id"
             (click)="selecionarAba(aba.id)">
-      <span class="tab-icon">{{ aba.icone }}</span>
+      <span class="tab-icon" [innerHTML]="getTabIconSvg(aba.id)"></span>
       <span class="tab-label">{{ aba.label }}</span>
     </button>
   </nav>
@@ -140,18 +156,24 @@
 
           <label class="field">
             <span class="field-title">PROFISSÃO</span>
-            <select [ngModel]="profissaoNome()" (ngModelChange)="profissaoNome.set($event)">
-              <option *ngFor="let p of profissoes" [value]="p.nome">{{ p.nome }}</option>
-            </select>
+            <div class="field-value-box">
+              <button class="btn-primary" (click)="abrirProfissaoModal()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                ESCOLHER PROFISSÃO
+              </button>
+            </div>
           </label>
         </div>
 
         <!-- DETALHES DA PROFISSÃO SELECIONADA -->
         <div class="profession-banner" *ngIf="profissaoAtual().nome !== 'Nenhuma'">
-          <div class="profession-banner-header">
-            <span class="prof-tag">DADOS DA PROFISSÃO</span>
-            <span class="prof-name">{{ profissaoAtual().nome }}</span>
-          </div>
+            <div class="profession-banner-header">
+              <span class="prof-tag">DADOS DA PROFISSÃO</span>
+              <span class="prof-name" [style.color]="profissaoAtual().cor">
+                <span class="prof-icon" [innerHTML]="getSafeHtml(profissaoAtual().icone)"></span>
+                {{ profissaoAtual().nome }}
+              </span>
+            </div>
 
           <div class="prof-grid">
             <div class="prof-item">
@@ -164,6 +186,7 @@
               <div class="prof-equip-row">
                 <span class="prof-val">{{ profissaoAtual().equipamento }}</span>
                 <button class="btn-micro"
+                        *ngIf="possuiEquipamentoInicial()"
                         title="Adicionar automaticamente este equipamento ao inventário"
                         (click)="adicionarEquipamentoProfissao()">
                   + Guardar na Mochila
@@ -173,10 +196,12 @@
 
             <div class="prof-item">
               <span class="prof-label">DINHEIRO INICIAL ({{ profissaoAtual().dinheiro }})</span>
-              <div class="prof-money-row">
-                <button class="btn-dice" (click)="rolarDinheiro()">🎲 Rolar {{ profissaoAtual().dinheiro }}</button>
-                <span *ngIf="dinheiroRolado() !== null" class="money-result">$ {{ dinheiroRolado() }}</span>
-              </div>
+              <span class="prof-val bonus-highlight" *ngIf="dinheiroRolado() !== null" style="display: block; margin-top: 4px; color: var(--color-conhecimento); font-size: 1.2rem;">
+                $ {{ dinheiroRolado() }}
+              </span>
+              <button class="btn-micro" style="margin-top:4px;" *ngIf="dinheiroRolado() === null" (click)="rolarDinheiro()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="16" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="16" r="1.5" fill="currentColor"/><circle cx="16" cy="16" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg> Rolar Inicial
+              </button>
             </div>
           </div>
         </div>
@@ -230,25 +255,17 @@
                 <span class="attr-badge-tag">{{ attr.chave.toUpperCase() }}</span>
                 <span class="attr-desc">{{ attr.desc }}</span>
               </div>
-
-              <!-- ROLAGEM DE DADO RÁPIDA -->
-              <button class="btn-roll-attr"
-                      (click)="rolarTesteAtributo(attr.label,
-                        attr.chave === 'vigor' ? vigorTotal()
-                        : attr.chave === 'acuidade' ? acuidadeTotal()
-                        : attr.chave === 'psicometria' ? psicometriaTotal()
-                        : attr.chave === 'esoterismo' ? esoterismoTotal()
-                        : razaoTotal())"
-                      title="Rolar 1d20 + Atributo Total">
-                🎲 1d20
-              </button>
             </div>
 
             <div class="attr-card-controls">
               <div class="stepper-group">
                 <button class="btn-step dec" (click)="ajustarAtributo(attr.chave, -1)">−</button>
                 <div class="attr-val-display">
-                  <span class="attr-base-val">{{ atributos()[attr.chave] }}</span>
+                  <input type="number"
+                         class="attr-base-val attr-base-input"
+                         [style.width.ch]="atributos()[attr.chave].toString().length + 1"
+                         [ngModel]="atributos()[attr.chave]"
+                         (ngModelChange)="setAtributo(attr.chave, $event)">
                   <span class="attr-base-sub">BASE</span>
                 </div>
                 <button class="btn-step inc" (click)="ajustarAtributo(attr.chave, 1)">+</button>
@@ -315,28 +332,35 @@
             <div class="derived-box derived-vida">
               <span class="d-label">VIDA MÁXIMA</span>
               <span class="d-formula">VIGOR + 10</span>
-              <span class="d-value">{{ vidaMaxima() }}</span>
+              <input type="number"
+                     class="d-value d-value-input"
+                     [ngModel]="vidaMaxima()"
+                     (ngModelChange)="setVidaMaxima($event)">
             </div>
 
             <div class="derived-box derived-folego">
               <span class="d-label">FÔLEGO MÁXIMO</span>
               <span class="d-formula">= VIGOR</span>
-              <span class="d-value">{{ folegoMaximo() }}</span>
+              <input type="number"
+                     class="d-value d-value-input"
+                     [ngModel]="folegoMaximo()"
+                     (ngModelChange)="setFolegoMaximo($event)">
             </div>
 
             <div class="derived-box derived-sanidade">
               <span class="d-label">SANIDADE TOTAL</span>
-              <span class="d-formula">RAZÃO + 1d6 (MÍN. 2)</span>
-              <span class="d-value">{{ sanidadeTotal() }}</span>
-              <button class="btn-micro roll-sanity" (click)="rolarSanidade()">🎲 Rolar 1d6</button>
-              <span class="roll-note" *ngIf="ultimaRolagemSanidade() !== null">Dado: {{ ultimaRolagemSanidade() }}</span>
+              <span class="d-formula">RAZÃO (MÍN. 2) + 1d6</span>
+              <input type="number"
+                     class="d-value d-value-input"
+                     [ngModel]="sanidadeTotal()"
+                     (ngModelChange)="setSanidadeMaxima($event)">
+              <button class="btn-roll-inicial"
+                      *ngIf="ultimaRolagemSanidade() === null"
+                      (click)="rolarSanidade()"
+                      title="Rolar 1d6 para definir a Sanidade inicial">
+                🎲 Rolar Sanidade Inicial (1d6)
+              </button>
             </div>
-          </div>
-
-          <div class="sync-action">
-            <button class="btn-sync" (click)="sincronizarComMaximos()">
-              ↻ Sincronizar Vida, Fôlego e Sanidade nos valores máximos
-            </button>
           </div>
         </div>
       </section>
@@ -360,17 +384,30 @@
             </div>
             <div class="vital-control-row">
               <button class="vital-step" (click)="ajustarRecurso('vida', -1)">−</button>
-              <span class="vital-current-num" [class.danger]="vidaAtual() <= 0">{{ vidaAtual() }}</span>
+              <input type="number"
+                     class="vital-current-num vital-current-input"
+                     [class.danger]="vidaAtual() <= 0"
+                     [style.width.ch]="vidaAtual().toString().length + 1"
+                     [ngModel]="vidaAtual()"
+                     (ngModelChange)="setRecurso('vida', $event)">
               <button class="vital-step" (click)="ajustarRecurso('vida', 1)">+</button>
             </div>
-            <div class="vital-bar">
+            <div class="vital-bar" [class.has-extra]="vidaAtual() > vidaMaxima()">
               <div class="vital-fill fill-vida" [style.width.%]="vidaPorcentagem()"></div>
+              <div class="vital-fill-extra"
+                   *ngFor="let seg of vidaExtraSegmentos()"
+                   [style.width.%]="seg.percent"
+                   [style.background]="seg.background"
+                   [style.z-index]="seg.zIndex"></div>
             </div>
+            <p class="vital-extra-note" *ngIf="vidaAtual() > vidaMaxima()">
+              +{{ vidaAtual() - vidaMaxima() }} de Vida acima do máximo
+            </p>
             <p class="vital-warning" *ngIf="vidaAtual() <= 0 && vidaAtual() >= -5">
-              ⚠️ Em agonia! Perdendo 1 PV por turno (Teste de VIGOR para evitar).
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Em agonia! Perdendo 1 PV por turno (Teste de VIGOR para evitar).
             </p>
             <p class="vital-warning deadly" *ngIf="vidaAtual() < -5">
-              ☠ MORTE PERMANENTE (Passou de -5 de Vida)!
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="12" cy="8" r="5"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg> MORTE PERMANENTE (Passou de -5 de Vida)!
             </p>
           </div>
 
@@ -382,14 +419,27 @@
             </div>
             <div class="vital-control-row">
               <button class="vital-step" (click)="ajustarRecurso('folego', -1)">−</button>
-              <span class="vital-current-num" [class.exhausted]="folegoAtual() <= 0">{{ folegoAtual() }}</span>
+              <input type="number"
+                     class="vital-current-num vital-current-input"
+                     [class.exhausted]="folegoAtual() <= 0"
+                     [style.width.ch]="folegoAtual().toString().length + 1"
+                     [ngModel]="folegoAtual()"
+                     (ngModelChange)="setRecurso('folego', $event)">
               <button class="vital-step" (click)="ajustarRecurso('folego', 1)">+</button>
             </div>
-            <div class="vital-bar">
+            <div class="vital-bar" [class.has-extra]="folegoAtual() > folegoMaximo()">
               <div class="vital-fill fill-folego" [style.width.%]="folegoPorcentagem()"></div>
+              <div class="vital-fill-extra"
+                   *ngFor="let seg of folegoExtraSegmentos()"
+                   [style.width.%]="seg.percent"
+                   [style.background]="seg.background"
+                   [style.z-index]="seg.zIndex"></div>
             </div>
+            <p class="vital-extra-note" *ngIf="folegoAtual() > folegoMaximo()">
+              +{{ folegoAtual() - folegoMaximo() }} de Fôlego acima do máximo
+            </p>
             <p class="vital-warning" *ngIf="folegoAtual() <= 0">
-              ⚠️ Fôlego zerado: Perito em Exaustão (-[VIGOR] em todos os testes).
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Fôlego zerado: Perito em Exaustão (-[VIGOR] em todos os testes).
             </p>
             <p class="vital-info" *ngIf="folegoAtual() > 0">
               Recupera 1 ponto a cada 15 min. Correr: 5m/ponto. Pular/Escalar: 2 pontos.
@@ -397,45 +447,78 @@
           </div>
 
           <!-- SANIDADE -->
-          <div class="vital-card vital-sanidade">
+          <div class="vital-card vital-sanidade" [class.is-negative]="sanidadeAtual() < 0">
             <div class="vital-top">
               <span class="vital-name">SANIDADE</span>
               <span class="vital-bounds">Total: {{ sanidadeTotal() }}</span>
             </div>
             <div class="vital-control-row">
               <button class="vital-step" (click)="ajustarRecurso('sanidade', -1)">−</button>
-              <span class="vital-current-num" [class.insane]="sanidadeAtual() <= 0">{{ sanidadeAtual() }}</span>
+              <input type="number"
+                     class="vital-current-num vital-current-input"
+                     [class.insane]="sanidadeAtual() <= 0"
+                     [style.width.ch]="sanidadeAtual().toString().length + 1"
+                     [ngModel]="sanidadeAtual()"
+                     (ngModelChange)="setRecurso('sanidade', $event)">
               <button class="vital-step" (click)="ajustarRecurso('sanidade', 1)">+</button>
             </div>
-            <div class="vital-bar">
+
+            <!-- BARRA POSITIVA -->
+            <div class="vital-bar" *ngIf="sanidadeAtual() >= 0" [class.has-extra]="sanidadeAtual() > sanidadeTotal()">
               <div class="vital-fill fill-sanidade" [style.width.%]="sanidadePorcentagem()"></div>
+              <div class="vital-fill-extra"
+                   *ngFor="let seg of sanidadeExtraSegmentos()"
+                   [style.width.%]="seg.percent"
+                   [style.background]="seg.background"
+                   [style.z-index]="seg.zIndex"></div>
             </div>
+            <p class="vital-extra-note" *ngIf="sanidadeAtual() > sanidadeTotal()">
+              +{{ sanidadeAtual() - sanidadeTotal() }} de Sanidade acima do máximo
+            </p>
+
+            <!-- BARRA NEGATIVA (Da direita para a esquerda: roxo claro -> roxo profundo) -->
+            <div class="vital-bar-negative-wrapper" *ngIf="sanidadeAtual() < 0">
+              <div class="negative-bar-header">
+                <span class="neg-title"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 18a6 6 0 0 0 0-12"/><path d="M12 14a2 2 0 0 1 0-4"/></svg> SANIDADE NEGATIVA (0 a -100)</span>
+                <span class="neg-val">{{ sanidadeAtual() }}</span>
+              </div>
+              <div class="vital-bar-negative-track">
+                <div class="vital-fill-negative" [style.width.%]="sanidadeNegativaPorcentagem()"></div>
+              </div>
+            </div>
+
             <p class="vital-warning" *ngIf="sanidadeAtual() === 0">
-              ⚡ Sanidade em 0: Teste de RAZÃO na Corda da Loucura (Falha = 2x dano e Insano).
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Sanidade em 0: Teste de RAZÃO na Corda da Loucura (Falha = 2x dano e Insano).
             </p>
             <p class="vital-warning insane" *ngIf="sanidadeAtual() < 0">
-              🌀 Sanidade Negativa! Risco de distúrbios graves e colapso psíquico.
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:3px"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 18a6 6 0 0 0 0-12"/><path d="M12 14a2 2 0 0 1 0-4"/></svg> Sanidade Negativa! <strong>Efeito Ativo:</strong> {{ estagioMentalAtual()?.efeito }}
             </p>
           </div>
-        </div>
-
-        <div class="sync-action">
-          <button class="btn-sync" (click)="sincronizarComMaximos()">
-            ↻ Restaurar Vida, Fôlego e Sanidade aos valores máximos
-          </button>
         </div>
 
         <!-- CONHECIMENTO & NÍVEL DO PERITO -->
         <div class="knowledge-section">
           <div class="grid two">
-            <div class="knowledge-box">
+            <div class="knowledge-box featured-knowledge-box">
+              <div class="knowledge-box-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><line x1="2" y1="7" x2="22" y2="7"/></svg> PROFUNDEZAS DO OCULTO</div>
               <div class="k-header">
-                <span class="k-title">CONHECIMENTO DO INDIZÍVEL (%)</span>
-                <span class="k-val">{{ conhecimento() }}%</span>
+                <span class="k-title">CONHECIMENTO DO INDIZÍVEL</span>
+                <span class="knowledge-badge-tag">{{ conhecimento() }}%</span>
               </div>
-              <input type="number" min="0" max="100"
-                     [ngModel]="conhecimento()"
-                     (ngModelChange)="conhecimento.set($event)">
+
+              <div class="knowledge-stepper-row">
+                <button type="button" class="knowledge-step-btn" (click)="ajustarConhecimento(-1)" [disabled]="conhecimento() <= 0" title="Diminuir Conhecimento">−</button>
+                <div class="knowledge-val-wrapper">
+                  <input type="number"
+                         class="knowledge-num-input"
+                         min="0" max="100"
+                         [ngModel]="conhecimento()"
+                         (ngModelChange)="setConhecimento($event)">
+                  <span class="knowledge-suffix">%</span>
+                </div>
+                <button type="button" class="knowledge-step-btn" (click)="ajustarConhecimento(1)" [disabled]="conhecimento() >= 100" title="Aumentar Conhecimento">+</button>
+              </div>
+
               <div class="k-bar-track">
                 <div class="k-bar-fill" [style.width.%]="conhecimentoPorcentagem()"></div>
               </div>
@@ -445,18 +528,100 @@
               </p>
             </div>
 
-            <div class="level-box">
+            <div class="level-box featured-level-box">
+              <div class="level-box-badge"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> PROGRESSÃO DO PERITO</div>
               <div class="k-header">
-                <span class="k-title">NÍVEL DO PERITO</span>
-                <span class="k-val">NV. {{ nivel() }}</span>
+                <span class="k-title">NÍVEL DO PERSONAGEM</span>
+                <span class="level-badge-tag">NV. {{ nivel() }}</span>
               </div>
-              <input type="number" min="1"
-                     [ngModel]="nivel()"
-                     (ngModelChange)="nivel.set($event)">
+
+              <div class="level-stepper-row">
+                <button type="button" class="level-step-btn" (click)="ajustarNivel(-1)" [disabled]="nivel() <= 1" title="Diminuir Nível">−</button>
+                <div class="level-val-wrapper">
+                  <span class="level-prefix">NV.</span>
+                  <input type="number"
+                         class="level-num-input"
+                         min="1"
+                         [ngModel]="nivel()"
+                         (ngModelChange)="setNivel($event)">
+                </div>
+                <button type="button" class="level-step-btn" (click)="ajustarNivel(1)" title="Aumentar Nível">+</button>
+              </div>
+
               <p class="level-rule">
                 Ao subir de nível: ganha pontos para atributos, desbloqueia nós de conhecimento superiores
                 e ganha <strong>+1d4 de Vida</strong> e <strong>+1d4 de Sanidade</strong> (50% de chance de curar sanidade toda).
               </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABELA DE ESTADOS MENTAIS (SANIDADE NEGATIVA) & TABELA DE DIFICULDADES LADO A LADO -->
+        <div class="tables-side-by-side-grid">
+          <!-- TABELA DE ESTADOS MENTAIS (SANIDADE NEGATIVA) -->
+          <div class="negative-sanity-section" [class.has-active-stage]="sanidadeAtual() < 0">
+            <div class="neg-section-header">
+              <div class="neg-title-group">
+                <span class="neg-icon">🧠</span>
+                <h3>ESTADOS MENTAIS DA SANIDADE NEGATIVA</h3>
+              </div>
+              <span class="neg-active-badge" *ngIf="estagioMentalAtual()">
+                ⚠️ {{ estagioMentalAtual()?.faixa }} ATIVO
+              </span>
+            </div>
+
+            <!-- BARRA DE DEGRADAÇÃO MENTAL -->
+            <div class="degradation-bar-container">
+              <div class="degradation-bar-labels">
+                <span>-100 (Morte)</span>
+                <span>-50</span>
+                <span>0 (Lucidez)</span>
+              </div>
+              <div class="degradation-bar-track">
+                <div class="degradation-bar-fill" [style.width.%]="sanidadeNegativaPorcentagem()"></div>
+              </div>
+            </div>
+
+            <!-- LISTA VERTICAL COMPACTA COM AS CORES DE CADA ESTÁGIO -->
+            <div class="mental-table-grid">
+              <div *ngFor="let item of tabelaEstadosMentais"
+                   class="mental-stage-card"
+                   [class.active]="sanidadeAtual() <= item.max && sanidadeAtual() >= item.min">
+                <div class="stage-top">
+                  <span class="stage-range" [style.color]="item.cor">{{ item.faixa }}</span>
+                  <span class="stage-status-tag" *ngIf="sanidadeAtual() <= item.max && sanidadeAtual() >= item.min">ATIVO ⚠️</span>
+                </div>
+                <p class="stage-effect">{{ item.efeito }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABELA DE DIFICULDADES DE TESTE (d20) -->
+          <div class="dificuldades-table-section">
+            <div class="neg-section-header">
+              <div class="neg-title-group">
+                <span class="neg-icon">🎲</span>
+                <h3>DIFICULDADES DE TESTE (d20)</h3>
+              </div>
+            </div>
+
+            <div class="dif-table-wrapper">
+              <table class="dif-simple-table">
+                <thead>
+                  <tr>
+                    <th>DF</th>
+                    <th>Mínimo d20</th>
+                    <th>Nível de Dificuldade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let d of tabelaDificuldades" [class.active-df]="d.df === 1">
+                    <td class="df-num">DF {{ d.df }}</td>
+                    <td class="df-min"><strong>{{ d.min }}+</strong></td>
+                    <td class="df-desc">{{ getDificuldadeDesc(d.df) }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -494,16 +659,29 @@
 
         <div class="inventory-topbar">
           <div class="inventory-quick-gear" *ngIf="profissaoAtual().nome !== 'Nenhuma'">
-            <span class="gear-prof-label">Equipamento Padrão ({{ profissaoAtual().nome }}):</span>
+            <span class="gear-prof-label" [style.color]="profissaoAtual().cor">
+              <span class="prof-icon" [innerHTML]="getSafeHtml(profissaoAtual().icone)"></span>
+              Equipamento Padrão ({{ profissaoAtual().nome }}):
+            </span>
             <span class="gear-prof-text">{{ profissaoAtual().equipamento }}</span>
-            <button class="btn-micro" (click)="adicionarEquipamentoProfissao()">
+            <button class="btn-micro" *ngIf="possuiEquipamentoInicial()" (click)="adicionarEquipamentoProfissao()">
               + Importar da Profissão
             </button>
           </div>
 
-          <div class="inventory-money-tag" *ngIf="dinheiroRolado() !== null">
-            <span>Dinheiro em mãos:</span>
-            <strong>$ {{ dinheiroRolado() }}</strong>
+          <div class="inventory-money-tag">
+            <span>Carteira:</span>
+            <strong>$ {{ dinheiroRolado() !== null ? dinheiroRolado() : '0.00' }}</strong>
+            <div class="add-money-box">
+              <input type="text"
+                     inputmode="decimal"
+                     class="money-input"
+                     [value]="dinheiroInput()"
+                     (input)="dinheiroInput.set($any($event.target).value)"
+                     placeholder="0.00"
+                     (keyup.enter)="adicionarDinheiro()">
+              <button type="button" class="btn-micro" (click)="adicionarDinheiro()">+</button>
+            </div>
           </div>
         </div>
 
@@ -572,7 +750,7 @@
           <ul class="styled-item-list" *ngIf="rituaisMagias().length > 0">
             <li class="item-entry magic-entry" *ngFor="let r of rituaisMagias(); let i = index">
               <div class="item-main">
-                <span class="item-index-magic">🔮 {{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }}.</span>
+                <span class="item-index-magic"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><line x1="2" y1="7" x2="22" y2="7"/></svg> {{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }}.</span>
                 <span class="item-title">{{ r }}</span>
               </div>
               <button class="btn-remove" (click)="removerRitual(i)" title="Remover ritual">✕</button>
@@ -702,7 +880,7 @@
                       ▸ Desbloquear Nó (1 Traço)
                     </button>
                     <span class="block-reason" *ngIf="motivoBloqueio(caminhoAtual(), trilhaAtual(), i) as motivo">
-                      🔒 {{ motivo }}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> {{ motivo }}
                     </span>
                   </div>
 
@@ -726,132 +904,103 @@
       </section>
     </div>
 
-    <!-- ==================== ABA 7: GUIA DO LIVRO (TABELAS DE CONSULTA) ==================== -->
-    <div class="tab-content" *ngIf="abaAtiva() === 'regras'">
+    <!-- ==================== ABA 7: TABELAS DO LIVRO ==================== -->
+    <div class="tab-content" *ngIf="abaAtiva() === 'tabelas'">
       <section class="sheet-card">
         <div class="card-header">
           <span class="section-badge">07</span>
-          <h2>GUIA DO PERITO &bull; TABELAS &amp; REGRAS DE LIMIAR</h2>
+          <h2>TABELAS DE REFERÊNCIA DO LIVRO</h2>
         </div>
 
-        <div class="tables-grid">
-          <!-- DIFICULDADES -->
-          <div class="rule-table-card">
-            <h3 class="table-card-title">TABELA DE DIFICULDADES DE TESTE (d20)</h3>
-            <p class="table-card-desc">Para acerto em combate, tarefas minuciosas e ações sob pressão.</p>
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th>Dificuldade</th>
-                  <th>Mínimo no d20 + Mod</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let d of dificuldades">
-                  <td class="td-code">DF {{ d.df }}</td>
-                  <td class="td-target">{{ d.min }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="book-table-block">
+          <h3 class="book-table-title">DIFICULDADES DE TESTE</h3>
+          <table class="book-table">
+            <thead>
+              <tr><th>Grau de Dificuldade (DF)</th><th>Resultado Mínimo no d20</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of dificuldades">
+                <td>DF {{ d.df }}</td>
+                <td>{{ d.min }}+</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <!-- SANIDADE NEGATIVA -->
-          <div class="rule-table-card">
-            <h3 class="table-card-title">FAIXAS DE SANIDADE NEGATIVA &amp; DISTÚRBIOS</h3>
-            <p class="table-card-desc">Efeitos permanentes ou graves conforme o contato com o Indizível avança.</p>
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th>Faixa</th>
-                  <th>Efeito / Distúrbio</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let s of tabelaSanidadeNegativa">
-                  <td class="td-sanity-band">{{ s.faixa }}</td>
-                  <td>{{ s.efeito }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="book-table-block">
+          <h3 class="book-table-title">ESTADOS MENTAIS DA SANIDADE NEGATIVA</h3>
+          <table class="book-table">
+            <thead>
+              <tr><th>Faixa</th><th>Efeito</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of tabelaEstadosMentais">
+                <td>{{ e.faixa }}</td>
+                <td>{{ e.efeito }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <!-- ARMAS CORPO A CORPO -->
-          <div class="rule-table-card">
-            <h3 class="table-card-title">ARMAS DE CORPO-A-CORPO</h3>
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th>Arma</th>
-                  <th>Dano / Efeito</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let a of armasCorpoACorpo">
-                  <td class="td-strong">{{ a.nome }}</td>
-                  <td class="td-dice">{{ a.dano }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="book-table-block">
+          <h3 class="book-table-title">ARMAS CORPO A CORPO</h3>
+          <table class="book-table">
+            <thead>
+              <tr><th>Arma</th><th>Dano</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of armasCorpoACorpo">
+                <td [style.color]="a.cor" style="font-weight:700;">{{ a.nome }}</td>
+                <td>{{ a.dano }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <!-- ARMAS A DISTÂNCIA -->
-          <div class="rule-table-card">
-            <h3 class="table-card-title">ARMAS A DISTÂNCIA</h3>
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th>Arma</th>
-                  <th>Dano</th>
-                  <th>Cadência de Tiro</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let w of armasDistancia">
-                  <td class="td-strong">{{ w.nome }}</td>
-                  <td class="td-dice">{{ w.dano }}</td>
-                  <td class="td-cadence">{{ w.tiros }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="book-table-block">
+          <h3 class="book-table-title">ARMAS DE DISTÂNCIA</h3>
+          <table class="book-table">
+            <thead>
+              <tr><th>Arma</th><th>Dano</th><th>Cadência de Tiro</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of armasDistancia">
+                <td [style.color]="a.cor" style="font-weight:700;">{{ a.nome }}</td>
+                <td>{{ a.dano }}</td>
+                <td>{{ a.tiros }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <!-- ITENS MEDICINAIS -->
-          <div class="rule-table-card">
-            <h3 class="table-card-title">ITENS MEDICINAIS</h3>
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Efeito Medicinal</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let m of itensMedicinais">
-                  <td class="td-strong">{{ m.nome }}</td>
-                  <td>{{ m.efeito }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="book-table-block">
+          <h3 class="book-table-title">ITENS MEDICINAIS</h3>
+          <table class="book-table">
+            <thead>
+              <tr><th>Item</th><th>Efeito</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let i of itensMedicinais">
+                <td [style.color]="i.cor" style="font-weight:700;">{{ i.nome }}</td>
+                <td>{{ i.efeito }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <!-- ITENS PSICOATIVOS -->
-          <div class="rule-table-card">
-            <h3 class="table-card-title">ITENS PSICOATIVOS</h3>
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th>Substância</th>
-                  <th>Efeito Mental &amp; Riscos</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let p of itensPsicoativos">
-                  <td class="td-strong">{{ p.nome }}</td>
-                  <td>{{ p.efeito }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="book-table-block">
+          <h3 class="book-table-title">ITENS PSICOATIVOS</h3>
+          <table class="book-table">
+            <thead>
+              <tr><th>Item</th><th>Efeito</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let i of itensPsicoativos">
+                <td [style.color]="i.cor" style="font-weight:700;">{{ i.nome }}</td>
+                <td>{{ i.efeito }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
@@ -864,4 +1013,175 @@
     <p>LIMIAR 1ª Edição &bull; Desenvolvido para o horror cósmico dos anos 80.</p>
     <p class="footer-sub">Mantenha seu arquivo salvo exportando sua ficha em JSON regularmente.</p>
   </footer>
+</div>
+
+<!-- MODAL DE PROFISSÃO -->
+<div class="modal-overlay" *ngIf="isProfissaoModalOpen()" (click)="fecharProfissaoModal()">
+  <div class="modal-content prof-modal-layout" (click)="$event.stopPropagation()">
+    <div class="prof-modal-sidebar">
+      <h3>SELECIONE A PROFISSÃO</h3>
+      <div class="prof-list">
+        <div class="prof-list-item" *ngFor="let p of profissoes" 
+             [class.active]="profissaoPreview().nome === p.nome"
+             (click)="profissaoPreview.set(p)"
+             [style.color]="p.cor">
+          <span class="prof-icon" [innerHTML]="getSafeHtml(p.icone)"></span>
+          {{ p.nome }}
+        </div>
+      </div>
+    </div>
+    <div class="prof-modal-body">
+      <div class="prof-modal-header" [style.color]="profissaoPreview().cor" [style.border-color]="profissaoPreview().cor">
+        <div class="prof-modal-title">
+          <span class="prof-icon-large" [innerHTML]="getSafeHtml(profissaoPreview().icone)"></span>
+          <h2>{{ profissaoPreview().nome }}</h2>
+        </div>
+        <button class="btn-micro" (click)="fecharProfissaoModal()" style="color: var(--text-main); border-color: var(--border-bright);">X Fechar</button>
+      </div>
+      
+      <div class="prof-modal-desc">
+        <p>{{ profissaoPreview().descricao }}</p>
+      </div>
+
+      <div class="prof-grid prof-modal-grid">
+        <div class="prof-item">
+          <span class="prof-label">BÔNUS MECÂNICO</span>
+          <span class="prof-val bonus-highlight">{{ profissaoPreview().bonus }}</span>
+        </div>
+        <div class="prof-item">
+          <span class="prof-label">EQUIPAMENTO INICIAL</span>
+          <span class="prof-val">{{ profissaoPreview().equipamento }}</span>
+        </div>
+        <div class="prof-item">
+          <span class="prof-label">DINHEIRO INICIAL</span>
+          <span class="prof-val">{{ profissaoPreview().dinheiro }}</span>
+        </div>
+      </div>
+
+      <div class="prof-modal-footer">
+        <button class="btn-primary prof-confirm-btn" [style.background-color]="profissaoPreview().cor" (click)="confirmarProfissao()">
+          CONFIRMAR: {{ profissaoPreview().nome | uppercase }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TELA 1: LOGIN DO USUÁRIO (Tabela `usuarios`) -->
+<div class="user-modal-overlay" *ngIf="mostrarTelaLogin()">
+  <div class="user-modal-card">
+    <div class="user-modal-header">
+      <h2>LOGIN DO USUÁRIO</h2>
+      <p class="user-modal-sub">Informe seu nome de usuário ou selecione uma conta existente para continuar.</p>
+    </div>
+
+    <div class="user-modal-body">
+      <div class="user-input-group">
+        <label class="user-input-label">NOME DE USUÁRIO</label>
+        <div class="user-input-row">
+          <input type="text"
+                 class="user-text-input"
+                 placeholder="Digite seu usuário..."
+                 [ngModel]="inputUsuario()"
+                 (ngModelChange)="inputUsuario.set($event)"
+                 (keyup.enter)="entrarComUsuario()">
+        </div>
+      </div>
+
+      <div class="registered-users-section" *ngIf="usuariosCadastrados().length > 0">
+        <span class="reg-label">CONTAS REGISTRADAS NO BANCO:</span>
+        <div class="reg-chips-grid">
+          <button type="button"
+                  *ngFor="let u of usuariosCadastrados()"
+                  class="user-chip-btn"
+                  [class.active]="u.username === usuarioAtual()"
+                  (click)="entrarComUsuario(u.username)">
+            👤 {{ u.username }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-modal-footer">
+      <button type="button" class="btn-user-submit" (click)="entrarComUsuario()">
+        ENTRAR
+      </button>
+      <button type="button" class="btn-user-cancel" *ngIf="usuarioAtual()" (click)="mostrarTelaLogin.set(false)">
+        Continuar como {{ usuarioAtual() }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA 2: LISTA DE PERITOS DO USUÁRIO (Tabela `peritos`) -->
+<div class="user-modal-overlay" *ngIf="mostrarTelaPeritos()">
+  <div class="user-modal-card peritos-modal-card">
+    <div class="user-modal-header">
+      <h2>PERITOS DE {{ usuarioAtual() | uppercase }}</h2>
+      <p class="user-modal-sub" *ngIf="!isMestre()">Selecione um perito para carregar a ficha ou crie um novo perito.</p>
+      <p class="user-modal-sub" *ngIf="isMestre()">Como 👑 MESTRALYSSA, você pode ver todos os peritos de todos os jogadores.</p>
+    </div>
+
+    <div class="user-modal-body">
+      <!-- BOTÃO DE CRIAR NOVO PERITO -->
+      <button type="button" class="btn-create-new-perito" (click)="iniciarNovoPerito()">
+        ➕ Criar Novo Perito para {{ usuarioAtual() }}
+      </button>
+
+      <!-- MEUS PERITOS -->
+      <div class="peritos-section">
+        <span class="reg-label">MEUS PERITOS CRIADOS:</span>
+
+        <div class="peritos-cards-grid" *ngIf="peritosDoUsuario().length > 0; else noPeritosUser">
+          <div *ngFor="let p of peritosDoUsuario()"
+               class="perito-card-item"
+               [class.active]="p._id === peritoIdAtual()"
+               (click)="selecionarPerito(p)">
+            <div class="perito-card-main">
+              <span class="perito-card-title">📜 {{ p.nomePerito }}</span>
+              <span class="perito-card-sub">
+                {{ p.profissao || 'Sem Profissão' }} &bull; NV. {{ p.nivel || 1 }}
+              </span>
+            </div>
+            <button type="button" class="btn-del-perito" (click)="deletarPerito(p._id, $event)" title="Excluir Perito">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <ng-template #noPeritosUser>
+          <div class="no-peritos-msg">
+            Nenhum perito criado para a conta '{{ usuarioAtual() }}' ainda.
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- VISÃO DO MESTRE: TODOS OS PERITOS DE TODOS OS PLAYERS -->
+      <div class="peritos-section mestre-section" *ngIf="isMestre() && peritosMestre().length > 0">
+        <span class="reg-label mestre-label-text">👑 PAINEL DO MESTRE &bull; TODOS OS PERITOS DOS PLAYERS:</span>
+        <div class="peritos-cards-grid">
+          <div *ngFor="let p of peritosMestre()"
+               class="perito-card-item mestre-item"
+               [class.active]="p._id === peritoIdAtual()"
+               (click)="selecionarPerito(p)">
+            <div class="perito-card-main">
+              <span class="perito-card-title">📜 {{ p.nomePerito }}</span>
+              <span class="perito-card-sub">
+                Player: <strong>{{ p.username }}</strong> &bull; {{ p.profissao || 'Sem Profissão' }} &bull; NV. {{ p.nivel || 1 }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-modal-footer">
+      <button type="button" class="btn-user-cancel" (click)="abrirTelaLogin()">
+        👤 Alternar Usuário / Trocar Conta
+      </button>
+      <button type="button" class="btn-user-cancel" (click)="mostrarTelaPeritos.set(false)">
+        Fechar
+      </button>
+    </div>
+  </div>
 </div>
