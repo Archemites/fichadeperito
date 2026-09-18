@@ -719,43 +719,94 @@
           <h2>GRIMÓRIO &bull; RITUAIS &amp; MAGIAS DO LIMIAR</h2>
         </div>
 
-        <div class="magic-rules-card">
-          <div class="magic-rules-header">ESTRUTURA CANÔNICA DE UMA MAGIA (LIVRO PÁG. 49)</div>
-          <p>Toda magia exige no mínimo 3 palavras de conjuração de forças do Limiar:</p>
-          <div class="magic-formula-tags">
-            <span class="magic-tag verbal">1x Palavra Verbal</span>
-            <span class="magic-sep">+</span>
-            <span class="magic-tag poder">1x Palavra de Poder</span>
-            <span class="magic-sep">+</span>
-            <span class="magic-tag impulso">1x Palavra de Impulso</span>
-          </div>
-          <p class="magic-rules-footer">
-            Custo em Sanidade = valor da palavra mais cara (Classe 1 a 5). Pontos perdidos são recuperados ao fim do combate se permanecer acima de 0.
-          </p>
-        </div>
-
-        <div class="add-item-bar">
-          <input type="text"
-                 [(ngModel)]="novoRitual"
-                 placeholder="Ex: Spawn Blood Barrier (Gof'nnn gn'th'bthnk mg'nglui) — Custo 3 Sanidade..."
-                 (keyup.enter)="adicionarRitual()">
-          <button class="btn-primary" (click)="adicionarRitual()">+ Registrar Magia/Ritual</button>
-        </div>
-
-        <div class="inventory-list-container">
-          <div class="empty-list" *ngIf="rituaisMagias().length === 0">
-            Nenhum ritual ou magia anotada no momento. Magias e rituais são concedidos por Revelações e Iluminações.
-          </div>
-
-          <ul class="styled-item-list" *ngIf="rituaisMagias().length > 0">
-            <li class="item-entry magic-entry" *ngFor="let r of rituaisMagias(); let i = index">
-              <div class="item-main">
-                <span class="item-index-magic"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><line x1="2" y1="7" x2="22" y2="7"/></svg> {{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }}.</span>
-                <span class="item-title">{{ r }}</span>
+        <div class="magic-layout-grid">
+          <!-- COLUNA ESQUERDA: LISTA DE MAGIAS -->
+          <div class="magic-left-col">
+            <div class="magic-rules-card">
+              <div class="magic-rules-header">ESTRUTURA CANÔNICA DE UMA MAGIA (LIVRO PÁG. 49)</div>
+              <p>Toda magia exige no mínimo 3 palavras de conjuração de forças do Limiar:</p>
+              <div class="magic-formula-tags">
+                <span class="magic-tag verbal">1x Palavra Verbal</span>
+                <span class="magic-sep">+</span>
+                <span class="magic-tag poder">1x Palavra de Poder</span>
+                <span class="magic-sep">+</span>
+                <span class="magic-tag impulso">1x Palavra de Impulso</span>
               </div>
-              <button class="btn-remove" (click)="removerRitual(i)" title="Remover ritual">✕</button>
-            </li>
-          </ul>
+              <p class="magic-rules-footer">
+                Custo em Sanidade = valor da palavra mais cara (Classe 1 a 5). Pontos perdidos são recuperados ao fim do combate se permanecer acima de 0.
+              </p>
+            </div>
+
+            <div class="add-item-bar">
+              <input type="text"
+                     [(ngModel)]="novoRitual"
+                     placeholder="Ex: Spawn Blood Barrier (Gof'nnn gn'th'bthnk mg'nglui) — Custo 3 Sanidade..."
+                     (keyup.enter)="adicionarRitual()">
+              <button class="btn-primary" (click)="adicionarRitual()">+ Registrar Magia/Ritual</button>
+            </div>
+
+            <div class="inventory-list-container">
+              <div class="empty-list" *ngIf="rituaisMagias().length === 0">
+                Nenhum ritual ou magia anotada no momento. Magias e rituais são concedidos por Revelações e Iluminações.
+              </div>
+
+              <ul class="styled-item-list" *ngIf="rituaisMagias().length > 0">
+                <li class="item-entry magic-entry" *ngFor="let r of rituaisMagias(); let i = index">
+                  <div class="item-main">
+                    <span class="item-index-magic"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 22 22 7 12 2"/><line x1="2" y1="7" x2="22" y2="7"/></svg> {{ (i + 1) < 10 ? '0' + (i + 1) : (i + 1) }}.</span>
+                    <span class="item-title">{{ r }}</span>
+                  </div>
+                  <button class="btn-remove" (click)="removerRitual(i)" title="Remover ritual">✕</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- COLUNA DIREITA: DICIONÁRIO DE PALAVRAS CONHECIDAS -->
+          <div class="magic-right-col">
+            <div class="dictionary-card">
+              <div class="dictionary-header">
+                <h3>DICIONÁRIO DE PALAVRAS CONHECIDAS</h3>
+                <p>Controle a quantidade de palavras que seu perito conhece.</p>
+              </div>
+
+              <div class="dictionary-grid">
+                <div class="dict-row header-row">
+                  <div class="dict-grau-col">Grau</div>
+                  <div class="dict-type-col verbal">Verbal</div>
+                  <div class="dict-type-col poder">Poder</div>
+                  <div class="dict-type-col impulso">Impulso</div>
+                </div>
+
+                <div class="dict-row" *ngFor="let pd of palavrasDicionario()">
+                  <div class="dict-grau-col">
+                    <span class="grau-badge">G{{ pd.grau }}</span>
+                  </div>
+
+                  <!-- VERBAL -->
+                  <div class="dict-type-col counter-col verbal">
+                    <button class="btn-dict-counter" (click)="updateWordCount(pd.grau, 'verbal', -1)">-</button>
+                    <span class="dict-count">{{ pd.verbal }}</span>
+                    <button class="btn-dict-counter" (click)="updateWordCount(pd.grau, 'verbal', 1)">+</button>
+                  </div>
+
+                  <!-- PODER -->
+                  <div class="dict-type-col counter-col poder">
+                    <button class="btn-dict-counter" (click)="updateWordCount(pd.grau, 'poder', -1)">-</button>
+                    <span class="dict-count">{{ pd.poder }}</span>
+                    <button class="btn-dict-counter" (click)="updateWordCount(pd.grau, 'poder', 1)">+</button>
+                  </div>
+
+                  <!-- IMPULSO -->
+                  <div class="dict-type-col counter-col impulso">
+                    <button class="btn-dict-counter" (click)="updateWordCount(pd.grau, 'impulso', -1)">-</button>
+                    <span class="dict-count">{{ pd.impulso }}</span>
+                    <button class="btn-dict-counter" (click)="updateWordCount(pd.grau, 'impulso', 1)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -904,106 +955,7 @@
       </section>
     </div>
 
-    <!-- ==================== ABA 7: TABELAS DO LIVRO ==================== -->
-    <div class="tab-content" *ngIf="abaAtiva() === 'tabelas'">
-      <section class="sheet-card">
-        <div class="card-header">
-          <span class="section-badge">07</span>
-          <h2>TABELAS DE REFERÊNCIA DO LIVRO</h2>
-        </div>
 
-        <div class="book-table-block">
-          <h3 class="book-table-title">DIFICULDADES DE TESTE</h3>
-          <table class="book-table">
-            <thead>
-              <tr><th>Grau de Dificuldade (DF)</th><th>Resultado Mínimo no d20</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let d of dificuldades">
-                <td>DF {{ d.df }}</td>
-                <td>{{ d.min }}+</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="book-table-block">
-          <h3 class="book-table-title">ESTADOS MENTAIS DA SANIDADE NEGATIVA</h3>
-          <table class="book-table">
-            <thead>
-              <tr><th>Faixa</th><th>Efeito</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let e of tabelaEstadosMentais">
-                <td>{{ e.faixa }}</td>
-                <td>{{ e.efeito }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="book-table-block">
-          <h3 class="book-table-title">ARMAS CORPO A CORPO</h3>
-          <table class="book-table">
-            <thead>
-              <tr><th>Arma</th><th>Dano</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let a of armasCorpoACorpo">
-                <td [style.color]="a.cor" style="font-weight:700;">{{ a.nome }}</td>
-                <td>{{ a.dano }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="book-table-block">
-          <h3 class="book-table-title">ARMAS DE DISTÂNCIA</h3>
-          <table class="book-table">
-            <thead>
-              <tr><th>Arma</th><th>Dano</th><th>Cadência de Tiro</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let a of armasDistancia">
-                <td [style.color]="a.cor" style="font-weight:700;">{{ a.nome }}</td>
-                <td>{{ a.dano }}</td>
-                <td>{{ a.tiros }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="book-table-block">
-          <h3 class="book-table-title">ITENS MEDICINAIS</h3>
-          <table class="book-table">
-            <thead>
-              <tr><th>Item</th><th>Efeito</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let i of itensMedicinais">
-                <td [style.color]="i.cor" style="font-weight:700;">{{ i.nome }}</td>
-                <td>{{ i.efeito }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="book-table-block">
-          <h3 class="book-table-title">ITENS PSICOATIVOS</h3>
-          <table class="book-table">
-            <thead>
-              <tr><th>Item</th><th>Efeito</th></tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let i of itensPsicoativos">
-                <td [style.color]="i.cor" style="font-weight:700;">{{ i.nome }}</td>
-                <td>{{ i.efeito }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
 
   </main>
 

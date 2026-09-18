@@ -16,7 +16,14 @@ export interface Atributos {
   razao: number;
 }
 
-export type AbaId = 'identidade' | 'atributos' | 'combate' | 'caminhos' | 'tabelas' | 'inventario' | 'magias';
+export type AbaId = 'identidade' | 'atributos' | 'combate' | 'caminhos' | 'inventario' | 'magias';
+
+export interface PalavraDicionario {
+  grau: number;
+  verbal: number;
+  poder: number;
+  impulso: number;
+}
 
 const PONTOS_INICIAIS = 5;
 const MIN_ATRIBUTO = -5;
@@ -213,6 +220,13 @@ export class AppComponent implements OnInit {
     this.statusAtivos.set(new Set());
     this.inventario.set([]);
     this.rituaisMagias.set([]);
+    this.palavrasDicionario.set([
+      { grau: 1, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 2, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 3, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 4, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 5, verbal: 0, poder: 0, impulso: 0 }
+    ]);
     this.dinheiroRolado.set(null);
     this.tracosRevelacao.set(0);
     this.comprasPorTrilha.set({});
@@ -234,6 +248,13 @@ export class AppComponent implements OnInit {
     this.statusAtivos.set(new Set(dados.statusAtivos ?? []));
     this.inventario.set(dados.inventario ?? []);
     this.rituaisMagias.set(dados.rituaisMagias ?? []);
+    this.palavrasDicionario.set(dados.palavrasDicionario ?? [
+      { grau: 1, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 2, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 3, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 4, verbal: 0, poder: 0, impulso: 0 },
+      { grau: 5, verbal: 0, poder: 0, impulso: 0 }
+    ]);
     this.dinheiroRolado.set(dados.dinheiroRolado ?? null);
     this.tracosRevelacao.set(dados.tracosRevelacao ?? 0);
     this.comprasPorTrilha.set(dados.comprasPorTrilha ?? {});
@@ -281,6 +302,7 @@ export class AppComponent implements OnInit {
       statusAtivos: Array.from(this.statusAtivos()),
       inventario: this.inventario(),
       rituaisMagias: this.rituaisMagias(),
+      palavrasDicionario: this.palavrasDicionario(),
       dinheiroRolado: this.dinheiroRolado(),
       tracosRevelacao: this.tracosRevelacao(),
       comprasPorTrilha: this.comprasPorTrilha()
@@ -361,8 +383,7 @@ export class AppComponent implements OnInit {
     { id: 'combate', label: 'Status & Combate' },
     { id: 'inventario', label: 'Inventário' },
     { id: 'magias', label: 'Grimório' },
-    { id: 'caminhos', label: 'Caminhos' },
-    { id: 'tabelas', label: 'Tabelas' }
+    { id: 'caminhos', label: 'Caminhos' }
   ];
 
   // --- Wiki do Sistema ---
@@ -385,8 +406,7 @@ export class AppComponent implements OnInit {
       combate: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>`,
       inventario: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
       magias: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>`,
-      caminhos: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
-      tabelas: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
+      caminhos: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
     };
     return this.sanitizer.bypassSecurityTrustHtml(icons[id] ?? '');
   }
@@ -690,6 +710,19 @@ export class AppComponent implements OnInit {
     return Math.max(0, Math.min(100, this.conhecimento()));
   });
 
+  dificuldades = [
+    { df: 1, min: 1 },
+    { df: 2, min: 2 },
+    { df: 3, min: 4 },
+    { df: 4, min: 6 },
+    { df: 5, min: 8 },
+    { df: 6, min: 10 },
+    { df: 7, min: 12 },
+    { df: 8, min: 14 },
+    { df: 9, min: 16 },
+    { df: 10, min: 18 }
+  ];
+
   tabelaEstadosMentais = [
     { min: -10, max: -1, faixa: '-1 a -10', efeito: 'Casos de Paranoia Severa e Alucinações', cor: '#d8b4fe' },
     { min: -20, max: -11, faixa: '-11 a -20', efeito: 'Casos de Psicose Grave e Agressividade', cor: '#c084fc' },
@@ -776,17 +809,35 @@ export class AppComponent implements OnInit {
 
   // --- Rituais / Magias conhecidas (anotações livres) ---
   rituaisMagias = signal<string[]>([]);
+  palavrasDicionario = signal<PalavraDicionario[]>([
+    { grau: 1, verbal: 0, poder: 0, impulso: 0 },
+    { grau: 2, verbal: 0, poder: 0, impulso: 0 },
+    { grau: 3, verbal: 0, poder: 0, impulso: 0 },
+    { grau: 4, verbal: 0, poder: 0, impulso: 0 },
+    { grau: 5, verbal: 0, poder: 0, impulso: 0 }
+  ]);
   novoRitual = '';
   adicionarRitual() {
     const v = this.novoRitual.trim();
-    if (!v) return;
-    this.rituaisMagias.update(list => [...list, v]);
-    this.novoRitual = '';
+    if (v) {
+      this.rituaisMagias.update(l => [...l, v]);
+      this.novoRitual = '';
+    }
   }
-  removerRitual(i: number) {
-    this.rituaisMagias.update(list => list.filter((_, idx) => idx !== i));
+  removerRitual(index: number) {
+    this.rituaisMagias.update(l => l.filter((_, i) => i !== index));
   }
 
+  updateWordCount(grau: number, tipo: 'verbal' | 'poder' | 'impulso', delta: number) {
+    this.palavrasDicionario.update(pd => pd.map(p => {
+      if (p.grau === grau) {
+        return { ...p, [tipo]: Math.max(0, p[tipo] + delta) };
+      }
+      return p;
+    }));
+  }
+
+  // --- Caminhos & Árvore ---
   // parse bônus textual das profissões, extraindo só os valores numéricos por atributo principal
   private parseBonusProfissao(texto: string): Partial<Atributos> {
     const resultado: Partial<Atributos> = {};

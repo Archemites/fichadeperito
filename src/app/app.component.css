@@ -344,7 +344,7 @@
    -------------------------------------------------------------------------- */
 .nav-tabs {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 6px;
   border-bottom: 2px solid var(--border-mid);
   margin-bottom: 24px;
@@ -2121,6 +2121,123 @@
   align-items: center;
   gap: 5px;
 }
+
+/* --------------------------------------------------------------------------
+   DICIONÁRIO DE PALAVRAS / LAYOUT DE MAGIAS
+   -------------------------------------------------------------------------- */
+.magic-layout-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .magic-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dictionary-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-mid);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dictionary-header h3 {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  color: var(--color-esoterismo);
+  margin-bottom: 6px;
+}
+
+.dictionary-header p {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.dictionary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border-dim);
+  background: var(--bg-void);
+}
+
+.dict-row {
+  display: grid;
+  grid-template-columns: 50px 1fr 1fr 1fr;
+  align-items: center;
+  border-bottom: 1px solid var(--border-dim);
+}
+.dict-row:last-child {
+  border-bottom: none;
+}
+
+.dict-row.header-row {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dict-type-col, .dict-grau-col {
+  padding: 8px;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 0.58rem;
+  color: var(--text-muted);
+}
+
+.dict-type-col.verbal { color: var(--color-psicometria); }
+.dict-type-col.poder { color: var(--color-esoterismo); }
+.dict-type-col.impulso { color: var(--color-razao); }
+
+.grau-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 0.65rem;
+}
+
+.counter-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dict-count {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  min-width: 14px;
+}
+
+.btn-dict-counter {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-dict-counter:hover {
+  border-color: var(--border-bright);
+  color: #fff;
+}
+.verbal .btn-dict-counter:hover { background: rgba(0, 229, 163, 0.2); border-color: var(--color-psicometria); }
+.poder .btn-dict-counter:hover { background: rgba(255, 61, 113, 0.2); border-color: var(--color-esoterismo); }
+.impulso .btn-dict-counter:hover { background: rgba(51, 102, 255, 0.2); border-color: var(--color-razao); }
 /* --------------------------------------------------------------------------
    OS 5 CAMINHOS DO INDIZÍVEL
    -------------------------------------------------------------------------- */
@@ -3065,8 +3182,6 @@
   color: #ffffff;
   border-color: var(--border-bright);
 }
-  vertical-align: middle;
-  flex-shrink: 0;
 }
 
 .vital-warning,
@@ -3272,6 +3387,18 @@
 /* --------------------------------------------------------------------------
    ABA 7: TABELAS DE REFERÊNCIA DO LIVRO
    -------------------------------------------------------------------------- */
+.tables-side-by-side-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .tables-side-by-side-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .book-table-block {
   margin-bottom: 28px;
 }
